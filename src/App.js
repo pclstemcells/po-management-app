@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Download, Eye, Edit3, Save, X } from 'lucide-react';
 
 const PurchaseOrderApp = () => {
-  const [currentView, setCurrentView] = useState('list');
+  const [currentView, setCurrentView] = useState('list'); // 'list', 'create', 'view', 'vendors'
   const [editingPO, setEditingPO] = useState(null);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [editingVendor, setEditingVendor] = useState(null);
+  const [showAddVendor, setShowAddVendor] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     companyAddress: '',
@@ -39,21 +42,152 @@ const PurchaseOrderApp = () => {
     invoiceDate: '',
     signedDocumentName: '',
     notes: ''
+  }
+
+  // Vendor Management View
+  if (currentView === 'vendors') {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Vendor Management</h1>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setCurrentView('list')}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+                >
+                  Back to POs
+                </button>
+                <button
+                  onClick={() => setShowAddVendor(true)}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Add Vendor
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {vendors.map((vendor) => (
+                    <tr key={vendor.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{vendor.name}</div>
+                          <div className="text-sm text-gray-500">{vendor.address}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {vendor.contact}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {vendor.phone}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {vendor.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {vendor.taxId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingVendor(vendor);
+                              setShowAddVendor(true);
+                            }}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button
+                            onClick={() => deleteVendor(vendor.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              {vendors.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No vendors yet. Add your first vendor to get started.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Add/Edit Vendor Modal */}
+          {showAddVendor && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">
+                    {editingVendor ? 'Edit Vendor' : 'Add New Vendor'}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowAddVendor(false);
+                      setEditingVendor(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <VendorForm 
+                  vendor={editingVendor}
+                  onSave={saveVendor}
+                  onCancel={() => {
+                    setShowAddVendor(false);
+                    setEditingVendor(null);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   });
 
-  // Load saved POs on component mount
+  // Load saved POs and vendors on component mount
   useEffect(() => {
     const savedPOs = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const savedVendors = JSON.parse(localStorage.getItem('vendors') || '[]');
     setPurchaseOrders(savedPOs);
+    setVendors(savedVendors);
     
     const nextPONumber = `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
     setFormData(prev => ({ ...prev, poNumber: nextPONumber }));
   }, []);
 
-  // Save POs to localStorage whenever purchaseOrders changes
+  // Save POs and vendors to localStorage
   useEffect(() => {
     localStorage.setItem('purchaseOrders', JSON.stringify(purchaseOrders));
   }, [purchaseOrders]);
+
+  useEffect(() => {
+    localStorage.setItem('vendors', JSON.stringify(vendors));
+  }, [vendors]);
 
   const getExpenseCategoryDisplay = (category) => {
     const categoryMap = {
@@ -66,6 +200,110 @@ const PurchaseOrderApp = () => {
       'marketing': 'Marketing',
       'other': 'Other'
     };
+
+// Vendor Form Component
+const VendorForm = ({ vendor, onSave, onCancel }) => {
+  const [vendorData, setVendorData] = useState({
+    name: vendor?.name || '',
+    address: vendor?.address || '',
+    contact: vendor?.contact || '',
+    phone: vendor?.phone || '',
+    email: vendor?.email || '',
+    taxId: vendor?.taxId || ''
+  });
+
+  const handleChange = (field, value) => {
+    setVendorData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!vendorData.name || !vendorData.address) {
+      alert('Please fill in vendor name and address');
+      return;
+    }
+    onSave(vendorData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name *</label>
+          <input
+            type="text"
+            value={vendorData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID/EIN</label>
+          <input
+            type="text"
+            value={vendorData.taxId}
+            onChange={(e) => handleChange('taxId', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+          <input
+            type="text"
+            value={vendorData.contact}
+            onChange={(e) => handleChange('contact', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+          <input
+            type="text"
+            value={vendorData.phone}
+            onChange={(e) => handleChange('phone', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input
+            type="email"
+            value={vendorData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+          <textarea
+            value={vendorData.address}
+            onChange={(e) => handleChange('address', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            rows={3}
+            required
+          />
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+        >
+          {vendor ? 'Update Vendor' : 'Add Vendor'}
+        </button>
+      </div>
+    </form>
+  );
+};
     return categoryMap[category] || category;
   };
 
@@ -192,13 +430,41 @@ const PurchaseOrderApp = () => {
     setCurrentView('create');
   };
 
+  const selectVendor = (vendor) => {
+    setFormData(prev => ({
+      ...prev,
+      vendorName: vendor.name,
+      vendorAddress: vendor.address,
+      vendorContact: vendor.contact,
+      vendorPhone: vendor.phone,
+      vendorEmail: vendor.email,
+      vendorTaxId: vendor.taxId
+    }));
+    setShowAddVendor(false);
+  };
+
+  const saveVendor = (vendorData) => {
+    if (editingVendor) {
+      setVendors(prev => prev.map(v => v.id === editingVendor.id ? { ...vendorData, id: editingVendor.id } : v));
+      setEditingVendor(null);
+    } else {
+      const newVendor = { ...vendorData, id: Date.now(), createdAt: new Date().toISOString() };
+      setVendors(prev => [...prev, newVendor]);
+    }
+    setShowAddVendor(false);
+  };
+
+  const deleteVendor = (id) => {
+    if (window.confirm('Are you sure you want to delete this vendor?')) {
+      setVendors(prev => prev.filter(v => v.id !== id));
+    }
+  };
+
   const deletePO = (id) => {
     if (window.confirm('Are you sure you want to delete this purchase order?')) {
       setPurchaseOrders(prev => prev.filter(po => po.id !== id));
     }
   };
-
-  const exportToSnowflake = async () => {
     try {
       const response = await fetch('/api/export-to-snowflake', {
         method: 'POST',
@@ -231,7 +497,7 @@ const PurchaseOrderApp = () => {
     }
   };
 
-  // List View
+  const exportToSnowflake = async () => {
   if (currentView === 'list') {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -246,6 +512,13 @@ const PurchaseOrderApp = () => {
                 >
                   <Plus size={20} />
                   New PO
+                </button>
+                <button
+                  onClick={() => setCurrentView('vendors')}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                >
+                  <Eye size={20} />
+                  Manage Vendors
                 </button>
                 <button
                   onClick={exportToSnowflake}
@@ -445,7 +718,39 @@ const PurchaseOrderApp = () => {
 
             {/* Vendor Information */}
             <div className="bg-green-50 p-4 rounded-lg mb-6">
-              <h2 className="text-lg font-semibold mb-4">Vendor Information</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Vendor Information</h2>
+                <button
+                  onClick={() => setShowAddVendor(!showAddVendor)}
+                  className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  {showAddVendor ? 'Cancel' : 'Add New Vendor'}
+                </button>
+              </div>
+
+              {/* Vendor Selection Dropdown */}
+              {vendors.length > 0 && !showAddVendor && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Select Existing Vendor</label>
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const vendor = vendors.find(v => v.id === parseInt(e.target.value));
+                        selectVendor(vendor);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Choose existing vendor or add details below</option>
+                    {vendors.map(vendor => (
+                      <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Manual Vendor Entry */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name *</label>
@@ -465,6 +770,33 @@ const PurchaseOrderApp = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                  <input
+                    type="text"
+                    value={formData.vendorContact}
+                    onChange={(e) => handleInputChange('vendorContact', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    value={formData.vendorPhone}
+                    onChange={(e) => handleInputChange('vendorPhone', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={formData.vendorEmail}
+                    onChange={(e) => handleInputChange('vendorEmail', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Address *</label>
                   <textarea
@@ -475,6 +807,28 @@ const PurchaseOrderApp = () => {
                   />
                 </div>
               </div>
+
+              {/* Add to Vendor List Button */}
+              {formData.vendorName && formData.vendorAddress && (
+                <div className="mt-4 p-3 bg-blue-50 rounded border">
+                  <button
+                    onClick={() => saveVendor({
+                      name: formData.vendorName,
+                      address: formData.vendorAddress,
+                      contact: formData.vendorContact,
+                      phone: formData.vendorPhone,
+                      email: formData.vendorEmail,
+                      taxId: formData.vendorTaxId
+                    })}
+                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                  >
+                    Save to Vendor List
+                  </button>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Save this vendor for future use
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Items */}
@@ -683,7 +1037,7 @@ const PurchaseOrderApp = () => {
                   </p>
                   {formData.signedDocumentName && (
                     <p className="text-sm text-green-600 mt-2">
-                      ? Uploaded: {formData.signedDocumentName}
+                      ✓ Uploaded: {formData.signedDocumentName}
                     </p>
                   )}
                 </div>
