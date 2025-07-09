@@ -595,21 +595,27 @@ const PurchaseOrderApp = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Requested By *</label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.requestedBy}
                     onChange={(e) => handleInputChange('requestedBy', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value="">Select Requester</option>
+                    <option value="David Torres - Director of Operations">David Torres - Director of Operations</option>
+                    <option value="Dr. Joshua Ortiz-Guzman - Chief Scientific Officer">Dr. Joshua Ortiz-Guzman - Chief Scientific Officer</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Approved By *</label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.approvedBy}
                     onChange={(e) => handleInputChange('approvedBy', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
+                  >
+                    <option value="">Select Approver</option>
+                    <option value="David Torres - Director of Operations">David Torres - Director of Operations</option>
+                    <option value="Dr. Joshua Ortiz-Guzman - Chief Scientific Officer">Dr. Joshua Ortiz-Guzman - Chief Scientific Officer</option>
+                  </select>
                 </div>
               </div>
             </div>
