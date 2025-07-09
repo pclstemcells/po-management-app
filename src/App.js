@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Download, Eye, Edit3, Save, X } from 'lucide-react';
 
 const PurchaseOrderApp = () => {
@@ -683,7 +683,7 @@ const PurchaseOrderApp = () => {
                   </p>
                   {formData.signedDocumentName && (
                     <p className="text-sm text-green-600 mt-2">
-                      ✓ Uploaded: {formData.signedDocumentName}
+                      ? Uploaded: {formData.signedDocumentName}
                     </p>
                   )}
                 </div>
