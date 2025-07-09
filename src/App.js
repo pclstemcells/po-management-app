@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Download, Eye, Edit3, Save, X } from 'lucide-react';
 
 const PurchaseOrderApp = () => {
@@ -33,10 +33,12 @@ const PurchaseOrderApp = () => {
     approvedBy: '',
     approvalDate: new Date().toISOString().split('T')[0],
     budgetCode: '',
-    orderStatus: 'pending',
+          orderStatus: 'draft',
     receivedDate: '',
     invoiceNumber: '',
     invoiceDate: '',
+    // Additional fields for tracking
+    signedDocumentName: '',
     notes: ''
   });
 
@@ -164,7 +166,7 @@ const PurchaseOrderApp = () => {
       approvedBy: '',
       approvalDate: new Date().toISOString().split('T')[0],
       budgetCode: '',
-      orderStatus: 'pending',
+      orderStatus: 'draft',
       receivedDate: '',
       invoiceNumber: '',
       invoiceDate: '',
@@ -596,10 +598,10 @@ const PurchaseOrderApp = () => {
               </div>
             </div>
 
-            {/* Approval Section */}
+            {/* Approval Section with Status and Document Upload */}
             <div className="bg-red-50 p-4 rounded-lg">
               <h2 className="text-lg font-semibold mb-4">Approval & Authorization</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Requested By *</label>
                   <select
@@ -631,18 +633,50 @@ const PurchaseOrderApp = () => {
                     onChange={(e) => handleInputChange('orderStatus', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="pending">Pending</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending Approval</option>
                     <option value="approved">Approved</option>
                     <option value="sent">Sent to Vendor</option>
-                    <option value="confirmed">Confirmed</option>
+                    <option value="confirmed">Confirmed by Vendor</option>
                     <option value="partial">Partially Received</option>
                     <option value="received">Fully Received</option>
                     <option value="invoiced">Invoiced</option>
                     <option value="paid">Paid</option>
                     <option value="cancelled">Cancelled</option>
+                    <option value="completed">Completed (Signed)</option>
                   </select>
                 </div>
               </div>
+              
+              {/* File Upload Section for Completed Documents */}
+              {(formData.orderStatus === 'completed' || formData.orderStatus === 'approved') && (
+                <div className="mt-4 p-3 bg-blue-50 rounded border">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Signed Document (Optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        // In a real app, you'd upload this to cloud storage
+                        handleInputChange('signedDocumentName', file.name);
+                        console.log('File selected:', file.name);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload the final signed PDF from Adobe Sign
+                  </p>
+                  {formData.signedDocumentName && (
+                    <p className="text-sm text-green-600 mt-2">
+                      ✓ Uploaded: {formData.signedDocumentName}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -792,40 +826,28 @@ const PurchaseOrderApp = () => {
               </div>
             </div>
 
-            {/* Simplified Signature Section for Adobe Stamps */}
+            {/* Simplified Single Line Signature Section */}
             <div className="mt-12 print:mt-16">
               <h3 className="text-lg font-semibold mb-8 text-center">AUTHORIZATION & APPROVAL</h3>
               
               <div className="space-y-8">
-                {/* Requested By Signature Line */}
+                {/* Requested By Single Line */}
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">REQUESTED BY:</p>
                   <p className="font-semibold text-gray-900 mb-4">{formData.requestedBy}</p>
-                  <div className="grid grid-cols-2 gap-8">
-                    <div>
-                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
-                      <p className="text-sm text-gray-600">Signature</p>
-                    </div>
-                    <div>
-                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
-                      <p className="text-sm text-gray-600">Date</p>
-                    </div>
+                  <div>
+                    <div className="border-b-2 border-gray-900 mb-2 h-12 w-full"></div>
+                    <p className="text-sm text-gray-600">Signature and Date</p>
                   </div>
                 </div>
                 
-                {/* Approved By Signature Line */}
+                {/* Approved By Single Line */}
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">APPROVED BY:</p>
                   <p className="font-semibold text-gray-900 mb-4">{formData.approvedBy}</p>
-                  <div className="grid grid-cols-2 gap-8">
-                    <div>
-                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
-                      <p className="text-sm text-gray-600">Signature</p>
-                    </div>
-                    <div>
-                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
-                      <p className="text-sm text-gray-600">Date</p>
-                    </div>
+                  <div>
+                    <div className="border-b-2 border-gray-900 mb-2 h-12 w-full"></div>
+                    <p className="text-sm text-gray-600">Signature and Date</p>
                   </div>
                 </div>
               </div>
