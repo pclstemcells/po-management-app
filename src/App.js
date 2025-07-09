@@ -266,7 +266,7 @@ const PurchaseOrderApp = () => {
                         {po.vendorName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${po.totalAmount.toFixed(2)}
+                        ${po.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -631,9 +631,9 @@ const PurchaseOrderApp = () => {
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">PURCHASE ORDER</h1>
-              <div className="flex gap-3">
+            <div className="flex justify-between items-center mb-8 print:mb-4">
+              <h1 className="text-3xl font-bold text-gray-900 print:text-2xl">PURCHASE ORDER</h1>
+              <div className="flex gap-3 print:hidden">
                 <button
                   onClick={() => setCurrentView('list')}
                   className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
@@ -646,6 +646,27 @@ const PurchaseOrderApp = () => {
                 >
                   Print
                 </button>
+              </div>
+            </div>
+
+            {/* Company Header with Logo */}
+            <div className="border-b-2 border-gray-300 pb-6 mb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Logo placeholder - replace src with your actual logo URL */}
+                  <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                    PC
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Prodigy Cells</h2>
+                    <p className="text-gray-600">Regenerative Medicine</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">Purchase Order</p>
+                  <p className="text-lg font-semibold">{formData.poNumber}</p>
+                  <p className="text-sm text-gray-600">Date: {formData.poDate}</p>
+                </div>
               </div>
             </div>
 
@@ -702,9 +723,9 @@ const PurchaseOrderApp = () => {
                   {formData.items.map((item, index) => (
                     <tr key={index} className="border-b">
                       <td className="px-4 py-2">{item.description}</td>
-                      <td className="px-4 py-2">{item.quantity}</td>
-                      <td className="px-4 py-2">${item.unitPrice.toFixed(2)}</td>
-                      <td className="px-4 py-2">${item.total.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-center">{item.quantity}</td>
+                      <td className="px-4 py-2 text-right">${item.unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                      <td className="px-4 py-2 text-right font-medium">${item.total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -720,37 +741,69 @@ const PurchaseOrderApp = () => {
                   </div>
                 )}
               </div>
-              <div className="bg-yellow-50 p-4 rounded">
+              <div className="bg-yellow-50 p-4 rounded print:bg-white print:border print:border-gray-300">
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>${formData.subtotal.toFixed(2)}</span>
+                    <span>${formData.subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                   {formData.taxRate > 0 && (
                     <div className="flex justify-between">
                       <span>Tax ({formData.taxRate}%):</span>
-                      <span>${formData.taxAmount.toFixed(2)}</span>
+                      <span>${formData.taxAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                   )}
                   {formData.shipping > 0 && (
                     <div className="flex justify-between">
                       <span>Shipping:</span>
-                      <span>${formData.shipping.toFixed(2)}</span>
+                      <span>${formData.shipping.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
                     <span>Total:</span>
-                    <span>${formData.totalAmount.toFixed(2)}</span>
+                    <span>${formData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 bg-red-50 p-4 rounded">
-              <h3 className="font-semibold mb-2">Authorization:</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>Requested by: {formData.requestedBy}</div>
-                <div>Approved by: {formData.approvedBy}</div>
+            {/* Professional Signature Section */}
+            <div className="mt-12 print:mt-16">
+              <h3 className="text-lg font-semibold mb-6 text-center">AUTHORIZATION & APPROVAL</h3>
+              <div className="grid grid-cols-2 gap-12">
+                <div className="text-center">
+                  <div className="mb-8">
+                    <p className="text-sm font-medium text-gray-700 mb-2">REQUESTED BY:</p>
+                    <p className="font-semibold text-gray-900 mb-4">{formData.requestedBy}</p>
+                    <div className="border-b-2 border-gray-900 mb-2" style={{height: '2px', width: '200px', margin: '0 auto'}}></div>
+                    <p className="text-xs text-gray-600">Signature</p>
+                    <div className="mt-4">
+                      <div className="border-b border-gray-400 mb-1" style={{height: '1px', width: '100px', margin: '0 auto'}}></div>
+                      <p className="text-xs text-gray-600">Date</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="mb-8">
+                    <p className="text-sm font-medium text-gray-700 mb-2">APPROVED BY:</p>
+                    <p className="font-semibold text-gray-900 mb-4">{formData.approvedBy}</p>
+                    <div className="border-b-2 border-gray-900 mb-2" style={{height: '2px', width: '200px', margin: '0 auto'}}></div>
+                    <p className="text-xs text-gray-600">Signature</p>
+                    <div className="mt-4">
+                      <div className="border-b border-gray-400 mb-1" style={{height: '1px', width: '100px', margin: '0 auto'}}></div>
+                      <p className="text-xs text-gray-600">Date</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Footer for printed version */}
+              <div className="mt-8 pt-4 border-t border-gray-300 print:block hidden">
+                <div className="text-center text-xs text-gray-500">
+                  <p>This Purchase Order is subject to the terms and conditions agreed upon between Prodigy Cells and the vendor.</p>
+                  <p className="mt-1">Questions? Contact: {formData.companyEmail || 'info@prodigycells.com'}</p>
+                </div>
               </div>
             </div>
           </div>
