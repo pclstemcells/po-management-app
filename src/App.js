@@ -54,6 +54,20 @@ const PurchaseOrderApp = () => {
     localStorage.setItem('purchaseOrders', JSON.stringify(purchaseOrders));
   }, [purchaseOrders]);
 
+  const getExpenseCategoryDisplay = (category) => {
+    const categoryMap = {
+      'office-supplies': 'Office Supplies',
+      'equipment': 'Equipment',
+      'services': 'Professional Services',
+      'software': 'Software & Licenses',
+      'inventory': 'Inventory',
+      'travel': 'Travel & Entertainment',
+      'marketing': 'Marketing',
+      'other': 'Other'
+    };
+    return categoryMap[category] || category;
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -68,13 +82,6 @@ const PurchaseOrderApp = () => {
     
     setFormData(prev => ({ ...prev, items: newItems }));
     calculateTotals(newItems);
-  };
-
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, total: 0 }]
-    }));
   };
 
   const removeItem = (index) => {
@@ -592,7 +599,7 @@ const PurchaseOrderApp = () => {
             {/* Approval Section */}
             <div className="bg-red-50 p-4 rounded-lg">
               <h2 className="text-lg font-semibold mb-4">Approval & Authorization</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Requested By *</label>
                   <select
@@ -615,6 +622,24 @@ const PurchaseOrderApp = () => {
                     <option value="">Select Approver</option>
                     <option value="David Torres - Director of Operations">David Torres - Director of Operations</option>
                     <option value="Dr. Joshua Ortiz-Guzman - Chief Scientific Officer">Dr. Joshua Ortiz-Guzman - Chief Scientific Officer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                  <select
+                    value={formData.orderStatus}
+                    onChange={(e) => handleInputChange('orderStatus', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="sent">Sent to Vendor</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="partial">Partially Received</option>
+                    <option value="received">Fully Received</option>
+                    <option value="invoiced">Invoiced</option>
+                    <option value="paid">Paid</option>
+                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>
@@ -684,7 +709,7 @@ const PurchaseOrderApp = () => {
                 <div className="text-gray-700">
                   <div><strong>PO Number:</strong> {formData.poNumber}</div>
                   <div><strong>Date:</strong> {formData.poDate}</div>
-                  <div><strong>Category:</strong> {formData.expenseCategory}</div>
+                  <div><strong>Category:</strong> {getExpenseCategoryDisplay(formData.expenseCategory)}</div>
                   <div><strong>Status:</strong> 
                     <span className={`ml-2 px-2 py-1 text-xs rounded ${
                       formData.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
@@ -767,32 +792,39 @@ const PurchaseOrderApp = () => {
               </div>
             </div>
 
-            {/* Professional Signature Section */}
+            {/* Simplified Signature Section for Adobe Stamps */}
             <div className="mt-12 print:mt-16">
-              <h3 className="text-lg font-semibold mb-6 text-center">AUTHORIZATION & APPROVAL</h3>
-              <div className="grid grid-cols-2 gap-12">
-                <div className="text-center">
-                  <div className="mb-8">
-                    <p className="text-sm font-medium text-gray-700 mb-2">REQUESTED BY:</p>
-                    <p className="font-semibold text-gray-900 mb-4">{formData.requestedBy}</p>
-                    <div className="border-b-2 border-gray-900 mb-2" style={{height: '2px', width: '200px', margin: '0 auto'}}></div>
-                    <p className="text-xs text-gray-600">Signature</p>
-                    <div className="mt-4">
-                      <div className="border-b border-gray-400 mb-1" style={{height: '1px', width: '100px', margin: '0 auto'}}></div>
-                      <p className="text-xs text-gray-600">Date</p>
+              <h3 className="text-lg font-semibold mb-8 text-center">AUTHORIZATION & APPROVAL</h3>
+              
+              <div className="space-y-8">
+                {/* Requested By Signature Line */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">REQUESTED BY:</p>
+                  <p className="font-semibold text-gray-900 mb-4">{formData.requestedBy}</p>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div>
+                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
+                      <p className="text-sm text-gray-600">Signature</p>
+                    </div>
+                    <div>
+                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
+                      <p className="text-sm text-gray-600">Date</p>
                     </div>
                   </div>
                 </div>
                 
-                <div className="text-center">
-                  <div className="mb-8">
-                    <p className="text-sm font-medium text-gray-700 mb-2">APPROVED BY:</p>
-                    <p className="font-semibold text-gray-900 mb-4">{formData.approvedBy}</p>
-                    <div className="border-b-2 border-gray-900 mb-2" style={{height: '2px', width: '200px', margin: '0 auto'}}></div>
-                    <p className="text-xs text-gray-600">Signature</p>
-                    <div className="mt-4">
-                      <div className="border-b border-gray-400 mb-1" style={{height: '1px', width: '100px', margin: '0 auto'}}></div>
-                      <p className="text-xs text-gray-600">Date</p>
+                {/* Approved By Signature Line */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">APPROVED BY:</p>
+                  <p className="font-semibold text-gray-900 mb-4">{formData.approvedBy}</p>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div>
+                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
+                      <p className="text-sm text-gray-600">Signature</p>
+                    </div>
+                    <div>
+                      <div className="border-b-2 border-gray-900 mb-2 h-12"></div>
+                      <p className="text-sm text-gray-600">Date</p>
                     </div>
                   </div>
                 </div>
