@@ -33,11 +33,10 @@ const PurchaseOrderApp = () => {
     approvedBy: '',
     approvalDate: new Date().toISOString().split('T')[0],
     budgetCode: '',
-          orderStatus: 'draft',
+    orderStatus: 'draft',
     receivedDate: '',
     invoiceNumber: '',
     invoiceDate: '',
-    // Additional fields for tracking
     signedDocumentName: '',
     notes: ''
   });
@@ -84,6 +83,13 @@ const PurchaseOrderApp = () => {
     
     setFormData(prev => ({ ...prev, items: newItems }));
     calculateTotals(newItems);
+  };
+
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, total: 0 }]
+    }));
   };
 
   const removeItem = (index) => {
@@ -170,6 +176,7 @@ const PurchaseOrderApp = () => {
       receivedDate: '',
       invoiceNumber: '',
       invoiceDate: '',
+      signedDocumentName: '',
       notes: ''
     });
   };
@@ -279,9 +286,12 @@ const PurchaseOrderApp = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          po.orderStatus === 'draft' ? 'bg-gray-100 text-gray-800' :
                           po.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          po.orderStatus === 'approved' ? 'bg-green-100 text-green-800' :
                           po.orderStatus === 'confirmed' ? 'bg-blue-100 text-blue-800' :
                           po.orderStatus === 'received' ? 'bg-green-100 text-green-800' :
+                          po.orderStatus === 'completed' ? 'bg-purple-100 text-purple-800' :
                           po.orderStatus === 'paid' ? 'bg-gray-100 text-gray-800' :
                           'bg-red-100 text-red-800'
                         }`}>
@@ -422,6 +432,7 @@ const PurchaseOrderApp = () => {
                       <option value="office-supplies">Office Supplies</option>
                       <option value="equipment">Equipment</option>
                       <option value="services">Professional Services</option>
+                      <option value="software">Software & Licenses</option>
                       <option value="inventory">Inventory</option>
                       <option value="travel">Travel & Entertainment</option>
                       <option value="marketing">Marketing</option>
@@ -522,7 +533,7 @@ const PurchaseOrderApp = () => {
                           />
                         </td>
                         <td className="px-4 py-2">
-                          <span className="font-medium">${item.total.toFixed(2)}</span>
+                          <span className="font-medium">${item.total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </td>
                         <td className="px-4 py-2">
                           {formData.items.length > 1 && (
@@ -556,7 +567,7 @@ const PurchaseOrderApp = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span className="font-medium">${formData.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">${formData.subtotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Tax Rate (%):</span>
@@ -574,7 +585,7 @@ const PurchaseOrderApp = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Tax Amount:</span>
-                    <span className="font-medium">${formData.taxAmount.toFixed(2)}</span>
+                    <span className="font-medium">${formData.taxAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Shipping:</span>
@@ -592,7 +603,7 @@ const PurchaseOrderApp = () => {
                   </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2">
                     <span>Total:</span>
-                    <span>${formData.totalAmount.toFixed(2)}</span>
+                    <span>${formData.totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                   </div>
                 </div>
               </div>
@@ -746,9 +757,12 @@ const PurchaseOrderApp = () => {
                   <div><strong>Category:</strong> {getExpenseCategoryDisplay(formData.expenseCategory)}</div>
                   <div><strong>Status:</strong> 
                     <span className={`ml-2 px-2 py-1 text-xs rounded ${
+                      formData.orderStatus === 'draft' ? 'bg-gray-100 text-gray-800' :
                       formData.orderStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      formData.orderStatus === 'approved' ? 'bg-green-100 text-green-800' :
                       formData.orderStatus === 'confirmed' ? 'bg-blue-100 text-blue-800' :
                       formData.orderStatus === 'received' ? 'bg-green-100 text-green-800' :
+                      formData.orderStatus === 'completed' ? 'bg-purple-100 text-purple-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
                       {formData.orderStatus}
