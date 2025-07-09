@@ -1,6 +1,110 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Download, Eye, Edit3, Save, X } from 'lucide-react';
 
+// Vendor Form Component
+const VendorForm = ({ vendor, onSave, onCancel }) => {
+  const [vendorData, setVendorData] = useState({
+    name: vendor?.name || '',
+    address: vendor?.address || '',
+    contact: vendor?.contact || '',
+    phone: vendor?.phone || '',
+    email: vendor?.email || '',
+    taxId: vendor?.taxId || ''
+  });
+
+  const handleChange = (field, value) => {
+    setVendorData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!vendorData.name || !vendorData.address) {
+      alert('Please fill in vendor name and address');
+      return;
+    }
+    onSave(vendorData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name *</label>
+          <input
+            type="text"
+            value={vendorData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID/EIN</label>
+          <input
+            type="text"
+            value={vendorData.taxId}
+            onChange={(e) => handleChange('taxId', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+          <input
+            type="text"
+            value={vendorData.contact}
+            onChange={(e) => handleChange('contact', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+          <input
+            type="text"
+            value={vendorData.phone}
+            onChange={(e) => handleChange('phone', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input
+            type="email"
+            value={vendorData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+          <textarea
+            value={vendorData.address}
+            onChange={(e) => handleChange('address', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            rows={3}
+            required
+          />
+        </div>
+      </div>
+      
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+        >
+          {vendor ? 'Update Vendor' : 'Add Vendor'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const PurchaseOrderApp = () => {
   const [currentView, setCurrentView] = useState('list'); // 'list', 'create', 'view', 'vendors'
   const [editingPO, setEditingPO] = useState(null);
@@ -42,7 +146,233 @@ const PurchaseOrderApp = () => {
     invoiceDate: '',
     signedDocumentName: '',
     notes: ''
-  }
+  });
+
+  // Load saved POs and vendors on component mount
+  useEffect(() => {
+    const savedPOs = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
+    const savedVendors = JSON.parse(localStorage.getItem('vendors') || '[]');
+    setPurchaseOrders(savedPOs);
+    setVendors(savedVendors);
+    
+    const nextPONumber = `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    setFormData(prev => ({ ...prev, poNumber: nextPONumber }));
+  }, []);
+
+  // Save POs and vendors to localStorage
+  useEffect(() => {
+    localStorage.setItem('purchaseOrders', JSON.stringify(purchaseOrders));
+  }, [purchaseOrders]);
+
+  useEffect(() => {
+    localStorage.setItem('vendors', JSON.stringify(vendors));
+  }, [vendors]);
+
+  const getExpenseCategoryDisplay = (category) => {
+    const categoryMap = {
+      'office-supplies': 'Office Supplies',
+      'equipment': 'Equipment',
+      'services': 'Professional Services',
+      'software': 'Software & Licenses',
+      'inventory': 'Inventory',
+      'travel': 'Travel & Entertainment',
+      'marketing': 'Marketing',
+      'other': 'Other'
+    };
+    return categoryMap[category] || category;
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...formData.items];
+    newItems[index][field] = value;
+    
+    if (field === 'quantity' || field === 'unitPrice') {
+      newItems[index].total = newItems[index].quantity * newItems[index].unitPrice;
+    }
+    
+    setFormData(prev => ({ ...prev, items: newItems }));
+    calculateTotals(newItems);
+  };
+
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, total: 0 }]
+    }));
+  };
+
+  const removeItem = (index) => {
+    const newItems = formData.items.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, items: newItems }));
+    calculateTotals(newItems);
+  };
+
+  const calculateTotals = (items = formData.items) => {
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    const taxAmount = subtotal * (formData.taxRate / 100);
+    const totalAmount = subtotal + taxAmount + formData.shipping;
+    
+    setFormData(prev => ({
+      ...prev,
+      subtotal,
+      taxAmount,
+      totalAmount
+    }));
+  };
+
+  const selectVendor = (vendor) => {
+    setFormData(prev => ({
+      ...prev,
+      vendorName: vendor.name,
+      vendorAddress: vendor.address,
+      vendorContact: vendor.contact,
+      vendorPhone: vendor.phone,
+      vendorEmail: vendor.email,
+      vendorTaxId: vendor.taxId
+    }));
+    setShowAddVendor(false);
+  };
+
+  const saveVendor = (vendorData) => {
+    if (editingVendor) {
+      setVendors(prev => prev.map(v => v.id === editingVendor.id ? { ...vendorData, id: editingVendor.id } : v));
+      setEditingVendor(null);
+    } else {
+      const newVendor = { ...vendorData, id: Date.now(), createdAt: new Date().toISOString() };
+      setVendors(prev => [...prev, newVendor]);
+    }
+    setShowAddVendor(false);
+  };
+
+  const deleteVendor = (id) => {
+    if (window.confirm('Are you sure you want to delete this vendor?')) {
+      setVendors(prev => prev.filter(v => v.id !== id));
+    }
+  };
+
+  const savePO = async () => {
+    // First save locally
+    if (editingPO) {
+      setPurchaseOrders(prev => 
+        prev.map(po => po.id === editingPO.id ? { ...formData, id: editingPO.id } : po)
+      );
+    } else {
+      const newPO = {
+        ...formData,
+        id: Date.now(),
+        createdAt: new Date().toISOString()
+      };
+      setPurchaseOrders(prev => [...prev, newPO]);
+      
+      // Try to sync with backend
+      try {
+        await fetch('/api/purchase-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPO)
+        });
+      } catch (error) {
+        console.log('Backend not available, saved locally only');
+      }
+    }
+    
+    resetForm();
+    setCurrentView('list');
+    setEditingPO(null);
+  };
+
+  const resetForm = () => {
+    const nextPONumber = `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    setFormData({
+      companyName: '',
+      companyAddress: '',
+      companyContact: '',
+      companyPhone: '',
+      companyEmail: '',
+      poNumber: nextPONumber,
+      poDate: new Date().toISOString().split('T')[0],
+      deliveryDate: '',
+      paymentTerms: 'net-30',
+      expenseCategory: 'office-supplies',
+      vendorName: '',
+      vendorAddress: '',
+      vendorContact: '',
+      vendorPhone: '',
+      vendorEmail: '',
+      vendorTaxId: '',
+      items: [{ description: '', quantity: 1, unitPrice: 0, total: 0 }],
+      subtotal: 0,
+      taxRate: 0,
+      taxAmount: 0,
+      shipping: 0,
+      totalAmount: 0,
+      specialInstructions: '',
+      requestedBy: '',
+      approvedBy: '',
+      approvalDate: new Date().toISOString().split('T')[0],
+      budgetCode: '',
+      orderStatus: 'draft',
+      receivedDate: '',
+      invoiceNumber: '',
+      invoiceDate: '',
+      signedDocumentName: '',
+      notes: ''
+    });
+  };
+
+  const viewPO = (po) => {
+    setFormData(po);
+    setCurrentView('view');
+  };
+
+  const editPO = (po) => {
+    setFormData(po);
+    setEditingPO(po);
+    setCurrentView('create');
+  };
+
+  const deletePO = (id) => {
+    if (window.confirm('Are you sure you want to delete this purchase order?')) {
+      setPurchaseOrders(prev => prev.filter(po => po.id !== id));
+    }
+  };
+
+  const exportToSnowflake = async () => {
+    try {
+      const response = await fetch('/api/export-to-snowflake', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchaseOrders })
+      });
+      
+      if (response.ok) {
+        alert('Successfully exported to Snowflake!');
+      } else {
+        throw new Error('Export failed');
+      }
+    } catch (error) {
+      // Fallback for demo purposes
+      const dataToExport = purchaseOrders.map(po => ({
+        po_number: po.poNumber,
+        po_date: po.poDate,
+        vendor_name: po.vendorName,
+        vendor_tax_id: po.vendorTaxId,
+        total_amount: po.totalAmount,
+        status: po.orderStatus,
+        expense_category: po.expenseCategory,
+        requested_by: po.requestedBy,
+        approved_by: po.approvedBy,
+        created_at: po.createdAt
+      }));
+      
+      console.log('Data ready for Snowflake:', dataToExport);
+      alert('Backend not connected. Check console for export data structure.');
+    }
+  };
 
   // Vendor Management View
   if (currentView === 'vendors') {
@@ -167,337 +497,9 @@ const PurchaseOrderApp = () => {
         </div>
       </div>
     );
-  });
+  }
 
-  // Load saved POs and vendors on component mount
-  useEffect(() => {
-    const savedPOs = JSON.parse(localStorage.getItem('purchaseOrders') || '[]');
-    const savedVendors = JSON.parse(localStorage.getItem('vendors') || '[]');
-    setPurchaseOrders(savedPOs);
-    setVendors(savedVendors);
-    
-    const nextPONumber = `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
-    setFormData(prev => ({ ...prev, poNumber: nextPONumber }));
-  }, []);
-
-  // Save POs and vendors to localStorage
-  useEffect(() => {
-    localStorage.setItem('purchaseOrders', JSON.stringify(purchaseOrders));
-  }, [purchaseOrders]);
-
-  useEffect(() => {
-    localStorage.setItem('vendors', JSON.stringify(vendors));
-  }, [vendors]);
-
-  const getExpenseCategoryDisplay = (category) => {
-    const categoryMap = {
-      'office-supplies': 'Office Supplies',
-      'equipment': 'Equipment',
-      'services': 'Professional Services',
-      'software': 'Software & Licenses',
-      'inventory': 'Inventory',
-      'travel': 'Travel & Entertainment',
-      'marketing': 'Marketing',
-      'other': 'Other'
-    };
-
-// Vendor Form Component
-const VendorForm = ({ vendor, onSave, onCancel }) => {
-  const [vendorData, setVendorData] = useState({
-    name: vendor?.name || '',
-    address: vendor?.address || '',
-    contact: vendor?.contact || '',
-    phone: vendor?.phone || '',
-    email: vendor?.email || '',
-    taxId: vendor?.taxId || ''
-  });
-
-  const handleChange = (field, value) => {
-    setVendorData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!vendorData.name || !vendorData.address) {
-      alert('Please fill in vendor name and address');
-      return;
-    }
-    onSave(vendorData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Vendor Name *</label>
-          <input
-            type="text"
-            value={vendorData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID/EIN</label>
-          <input
-            type="text"
-            value={vendorData.taxId}
-            onChange={(e) => handleChange('taxId', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-          <input
-            type="text"
-            value={vendorData.contact}
-            onChange={(e) => handleChange('contact', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-          <input
-            type="text"
-            value={vendorData.phone}
-            onChange={(e) => handleChange('phone', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            value={vendorData.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
-          <textarea
-            value={vendorData.address}
-            onChange={(e) => handleChange('address', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            rows={3}
-            required
-          />
-        </div>
-      </div>
-      
-      <div className="flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-        >
-          {vendor ? 'Update Vendor' : 'Add Vendor'}
-        </button>
-      </div>
-    </form>
-  );
-};
-    return categoryMap[category] || category;
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleItemChange = (index, field, value) => {
-    const newItems = [...formData.items];
-    newItems[index][field] = value;
-    
-    if (field === 'quantity' || field === 'unitPrice') {
-      newItems[index].total = newItems[index].quantity * newItems[index].unitPrice;
-    }
-    
-    setFormData(prev => ({ ...prev, items: newItems }));
-    calculateTotals(newItems);
-  };
-
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { description: '', quantity: 1, unitPrice: 0, total: 0 }]
-    }));
-  };
-
-  const removeItem = (index) => {
-    const newItems = formData.items.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, items: newItems }));
-    calculateTotals(newItems);
-  };
-
-  const calculateTotals = (items = formData.items) => {
-    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-    const taxAmount = subtotal * (formData.taxRate / 100);
-    const totalAmount = subtotal + taxAmount + formData.shipping;
-    
-    setFormData(prev => ({
-      ...prev,
-      subtotal,
-      taxAmount,
-      totalAmount
-    }));
-  };
-
-  const savePO = async () => {
-    // First save locally
-    if (editingPO) {
-      setPurchaseOrders(prev => 
-        prev.map(po => po.id === editingPO.id ? { ...formData, id: editingPO.id } : po)
-      );
-    } else {
-      const newPO = {
-        ...formData,
-        id: Date.now(),
-        createdAt: new Date().toISOString()
-      };
-      setPurchaseOrders(prev => [...prev, newPO]);
-      
-      // Try to sync with backend
-      try {
-        await fetch('/api/purchase-orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newPO)
-        });
-      } catch (error) {
-        console.log('Backend not available, saved locally only');
-      }
-    }
-    
-    resetForm();
-    setCurrentView('list');
-    setEditingPO(null);
-  };
-
-  const resetForm = () => {
-    const nextPONumber = `PO-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
-    setFormData({
-      companyName: '',
-      companyAddress: '',
-      companyContact: '',
-      companyPhone: '',
-      companyEmail: '',
-      poNumber: nextPONumber,
-      poDate: new Date().toISOString().split('T')[0],
-      deliveryDate: '',
-      paymentTerms: 'net-30',
-      expenseCategory: 'office-supplies',
-      vendorName: '',
-      vendorAddress: '',
-      vendorContact: '',
-      vendorPhone: '',
-      vendorEmail: '',
-      vendorTaxId: '',
-      items: [{ description: '', quantity: 1, unitPrice: 0, total: 0 }],
-      subtotal: 0,
-      taxRate: 0,
-      taxAmount: 0,
-      shipping: 0,
-      totalAmount: 0,
-      specialInstructions: '',
-      requestedBy: '',
-      approvedBy: '',
-      approvalDate: new Date().toISOString().split('T')[0],
-      budgetCode: '',
-      orderStatus: 'draft',
-      receivedDate: '',
-      invoiceNumber: '',
-      invoiceDate: '',
-      signedDocumentName: '',
-      notes: ''
-    });
-  };
-
-  const viewPO = (po) => {
-    setFormData(po);
-    setCurrentView('view');
-  };
-
-  const editPO = (po) => {
-    setFormData(po);
-    setEditingPO(po);
-    setCurrentView('create');
-  };
-
-  const selectVendor = (vendor) => {
-    setFormData(prev => ({
-      ...prev,
-      vendorName: vendor.name,
-      vendorAddress: vendor.address,
-      vendorContact: vendor.contact,
-      vendorPhone: vendor.phone,
-      vendorEmail: vendor.email,
-      vendorTaxId: vendor.taxId
-    }));
-    setShowAddVendor(false);
-  };
-
-  const saveVendor = (vendorData) => {
-    if (editingVendor) {
-      setVendors(prev => prev.map(v => v.id === editingVendor.id ? { ...vendorData, id: editingVendor.id } : v));
-      setEditingVendor(null);
-    } else {
-      const newVendor = { ...vendorData, id: Date.now(), createdAt: new Date().toISOString() };
-      setVendors(prev => [...prev, newVendor]);
-    }
-    setShowAddVendor(false);
-  };
-
-  const deleteVendor = (id) => {
-    if (window.confirm('Are you sure you want to delete this vendor?')) {
-      setVendors(prev => prev.filter(v => v.id !== id));
-    }
-  };
-
-  const deletePO = (id) => {
-    if (window.confirm('Are you sure you want to delete this purchase order?')) {
-      setPurchaseOrders(prev => prev.filter(po => po.id !== id));
-    }
-  };
-    try {
-      const response = await fetch('/api/export-to-snowflake', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purchaseOrders })
-      });
-      
-      if (response.ok) {
-        alert('Successfully exported to Snowflake!');
-      } else {
-        throw new Error('Export failed');
-      }
-    } catch (error) {
-      // Fallback for demo purposes
-      const dataToExport = purchaseOrders.map(po => ({
-        po_number: po.poNumber,
-        po_date: po.poDate,
-        vendor_name: po.vendorName,
-        vendor_tax_id: po.vendorTaxId,
-        total_amount: po.totalAmount,
-        status: po.orderStatus,
-        expense_category: po.expenseCategory,
-        requested_by: po.requestedBy,
-        approved_by: po.approvedBy,
-        created_at: po.createdAt
-      }));
-      
-      console.log('Data ready for Snowflake:', dataToExport);
-      alert('Backend not connected. Check console for export data structure.');
-    }
-  };
-
-  const exportToSnowflake = async () => {
+  // List View
   if (currentView === 'list') {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
